@@ -29,13 +29,26 @@ public interface ArmedForcesRepository {
 	// question 6
 	public Long recruitUnit(Long armyId, Unit unit);
 
-	// question 8
+	// question 7
 	public List<Unit> getUnitsOfArmy(Long armyId);
+		
+		
+	// question 8
+	public List<Unit> getUnitsOfArmySortedPower(Long armyId);
 	
 	// question 9
-	public List<Unit> getUnitsWithPower50OrMore10();
+	public List<Unit> getUnitsWithPower50OrMore();
 	
 	//question 10
+	public Unit getUnitOfArmy(Long armyId, Long unitId);
+	
+	//question 11
 	public boolean removeUnitOfArmy(Long armyId, Long unitId);
+	
+	// question 12
+	public boolean removeStrongestUnitOfArmy(Long armyId);
+	
+	//question 13
+	public boolean removeStrongestUnit(Long armyId);
 
 }

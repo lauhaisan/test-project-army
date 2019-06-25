@@ -99,9 +99,22 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 
   @Override
   public Long recruitUnit(final Long armyId, final Unit unit) {
-
-    // TODO: implement this
-    throw new UnsupportedOperationException("This API is not implemented yet!");
+	  Army army=this.armies.get(armyId);
+	  if(army!=null) {
+		  
+	 
+	  if (army.getUnits().size() < 100) {
+	      
+	      army.setId(armyId);
+	      this.armies.put(armyId, army);
+	      return armyId;
+	    } else {
+	      throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot add more units. Unit in one army less than 100, Sir!");
+	    }
+	  }
+	  else {
+		  throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot add unit to army. Army not existed!");
+	  }
   }
 
   @Override
@@ -125,14 +138,40 @@ public List<Army> getArmiesOfGivenType(UnitType type) {
 	return null;
 }
 
+
+
 @Override
-public List<Unit> getUnitsWithPower50OrMore10() {
+public boolean removeUnitOfArmy(Long armyId, Long unitId) {
+	// TODO Auto-generated method stub
+	return false;
+}
+
+@Override
+public List<Unit> getUnitsOfArmySortedPower(Long armyId) {
 	// TODO Auto-generated method stub
 	return null;
 }
 
 @Override
-public boolean removeUnitOfArmy(Long armyId, Long unitId) {
+public List<Unit> getUnitsWithPower50OrMore() {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public Unit getUnitOfArmy(Long armyId, Long unitId) {
+	// TODO Auto-generated method stub
+	return null;
+}
+
+@Override
+public boolean removeStrongestUnitOfArmy(Long armyId) {
+	// TODO Auto-generated method stub
+	return false;
+}
+
+@Override
+public boolean removeStrongestUnit(Long armyId) {
 	// TODO Auto-generated method stub
 	return false;
 }
