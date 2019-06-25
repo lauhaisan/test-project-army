@@ -55,10 +55,44 @@ public class ArmedForcesController {
   
   
   @ApiOperation(value = "Fetch the army’ details", notes = "Returns the army’ details")
-  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = UnitDetailsView.class, responseContainer = "List")})
-  @GetMapping("/armies/{armyId:[\\d]+}/detail")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = ArmyDetailsView.class, responseContainer = "Object")})
+  @GetMapping("/armies/{armyId:[\\d]+}/")
   public ArmyDetailsView getArmyById(@PathVariable(name = "armyId") final Long armyId) {
     return ArmyDetailsView.fromArmy(this.armedForcesRepository.getArmyById(armyId));
+  }
+  @ApiOperation(value = "The given unit killed/destroyed (removed from the army)", notes = "Returns boolean result removed unit")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Boolean.class)})
+  @DeleteMapping("/armies/{armyId:[\\d]+}/units/{unitId:[\\d]+}")
+  public boolean removeUnit(@PathVariable(name = "armyId") final Long armyId, @PathVariable(name = "unitId") final Long unitId) {
+    return this.armedForcesRepository.removeUnit(armyId, unitId);
+  }
+  
+  @ApiOperation(value = "Fetch the unit details", notes = "Returns the unit of the army")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = UnitDetailsView.class)})
+  @GetMapping("/armies/{armyId:[\\d]+}/units/{unitId:[\\d]+}")
+  public UnitDetailsView getUnitOfArmy(@PathVariable(name = "armyId") final Long armyId, @PathVariable(name = "unitId") final Long unitId) {
+    return UnitDetailsView.fromUnit(this.armedForcesRepository.getUnitOfArmy(armyId, unitId)) ;
+  }
+  
+  @ApiOperation(value = "The strongest unit (by combat power) killed/destroyed (removed from the army)", notes = "Returns boolean result removed strongest unit")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Boolean.class)})
+  @DeleteMapping("/armies/{armyId:[\\d]+}/units/strongest")
+  public boolean removeStrongestUnitOfArmy(@PathVariable(name = "armyId") final Long armyId, @PathVariable(name = "unitId") final Long unitId) {
+    return this.armedForcesRepository.removeStrongestUnitOfArmy(armyId);
+  }
+ 
+  @ApiOperation(value = "Fetch all units of the army sorted by combat power descending", notes = "Returns a list of all stored units of the army")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = UnitDetailsView.class, responseContainer = "List")})
+  @GetMapping("/armies/{armyId:[\\d]+}/units/sorted")
+  public List<UnitDetailsView> getUnitsOfArmySortedPower(@PathVariable(name = "armyId") final Long armyId) {
+    return this.armedForcesRepository.getUnitsOfArmySortedPower(armyId).stream().map(UnitDetailsView::fromUnit).collect(Collectors.toList());
+  }
+  
+  @ApiOperation(value = "Fetch those units of the army which have combat power 50 or more", notes = "Returns a list units of the army which have combat power 50 or more")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = UnitDetailsView.class, responseContainer = "List")})
+  @GetMapping("/armies/{armyId:[\\d]+}/units/power50")
+  public List<UnitDetailsView> getUnitsWithPower50OrMore(@PathVariable(name = "armyId") final Long armyId) {
+    return this.armedForcesRepository.getUnitsWithPower50OrMore(armyId).stream().map(UnitDetailsView::fromUnit).collect(Collectors.toList());
   }
 
 }

@@ -3,6 +3,7 @@ package com.syniverse.wdm.interview.armedforces.repository;
 import java.util.List;
 
 import com.syniverse.wdm.interview.armedforces.dto.Army;
+import com.syniverse.wdm.interview.armedforces.dto.ArmyType;
 import com.syniverse.wdm.interview.armedforces.dto.Unit;
 import com.syniverse.wdm.interview.armedforces.dto.UnitType;
 
@@ -20,7 +21,7 @@ public interface ArmedForcesRepository {
 	//question 4
 	// List armies of a given type
 	// Liệt kê các đội quân của một loại nhất định
-	public List<Army> getArmiesOfGivenType(UnitType type);
+	public List<Army> getArmiesOfGivenType(ArmyType type);
 
 	// question 5
 	// Fetch the army’ details
@@ -37,13 +38,13 @@ public interface ArmedForcesRepository {
 	public List<Unit> getUnitsOfArmySortedPower(Long armyId);
 	
 	// question 9
-	public List<Unit> getUnitsWithPower50OrMore();
+	public List<Unit> getUnitsWithPower50OrMore(Long armyId);
 	
 	//question 10
 	public Unit getUnitOfArmy(Long armyId, Long unitId);
 	
 	//question 11
-	public boolean removeUnitOfArmy(Long armyId, Long unitId);
+	public boolean removeUnit(Long armyId, Long unitId);
 	
 	// question 12
 	public boolean removeStrongestUnitOfArmy(Long armyId);
