@@ -66,6 +66,7 @@ public class ArmedForcesController {
   public boolean removeUnit(@PathVariable(name = "armyId") final Long armyId, @PathVariable(name = "unitId") final Long unitId) {
     return this.armedForcesRepository.removeUnit(armyId, unitId);
   }
+
   
   @ApiOperation(value = "Fetch the unit details", notes = "Returns the unit of the army")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = UnitDetailsView.class)})
@@ -77,7 +78,7 @@ public class ArmedForcesController {
   @ApiOperation(value = "The strongest unit (by combat power) killed/destroyed (removed from the army)", notes = "Returns boolean result removed strongest unit")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Boolean.class)})
   @DeleteMapping("/armies/{armyId:[\\d]+}/units/strongest")
-  public boolean removeStrongestUnitOfArmy(@PathVariable(name = "armyId") final Long armyId, @PathVariable(name = "unitId") final Long unitId) {
+  public boolean removeStrongestUnitOfArmy(@PathVariable(name = "armyId") final Long armyId) {
     return this.armedForcesRepository.removeStrongestUnitOfArmy(armyId);
   }
  
