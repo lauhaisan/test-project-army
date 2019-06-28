@@ -106,13 +106,22 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	@Override
 	public Long recruitUnit(final Long armyId, final Unit unit) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
+		//check army exist
 		if (armyOptional.isPresent()) {
 			Army amry = armyOptional.get();
+			//check size unit in that army
 			if (amry.getUnits().size() < 100) {
-				final Long unitId = getNextUnitId(amry);
-				amry.getUnits()
-						.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType()).build());
-				return unitId;
+				//check unit type is not acceptable in that army
+				if(amry.getType()==unit.getType().getArmyType()) {
+					final Long unitId = getNextUnitId(amry);
+					amry.getUnits()
+							.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType()).build());
+					return unitId;
+				}else {
+					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+							"Cannot add units. Unit type is not acceptable in that army  , Sir!");
+				}
+				
 			} else {
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 						"Cannot add more units. Unit in one army less than 100, Sir!");
@@ -151,8 +160,15 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	@Override
 	public boolean removeUnit(Long armyId, Long unitId) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
+		boolean isRemoved=false;
 		if (armyOptional.isPresent()) {
-			return armyOptional.get().getUnits().removeIf(unit -> unit.getId() == unitId);
+			 if(armyOptional.get().getUnits().removeIf(unit -> unit.getId() == unitId)) {
+				 isRemoved=true;
+			 }
+			 if(armyOptional.get().getUnits().size()==0) {
+				 this.armies.remove(armyId);
+			 }
+			 return isRemoved;
 		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 					"Cannot add unit to army. Army not existed!");
@@ -232,5 +248,8 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 		return (army.getUnits().isEmpty() ? 0L
 				: Collections.max(army.getUnits().stream().map(Unit::getId).collect(Collectors.toList()))) + 1L;
 	}
+	
+	
+	
 
 }
