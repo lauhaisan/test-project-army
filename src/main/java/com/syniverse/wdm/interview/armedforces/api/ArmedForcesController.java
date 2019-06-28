@@ -31,6 +31,12 @@ public class ArmedForcesController {
   public Long createArmy(@RequestBody final ArmyInputView army) {
     return this.armedForcesRepository.createArmy(Optional.ofNullable(army).map(ArmyInputView::toArmy).orElse(null));
   }
+  @ApiOperation(value = "Remove the army", notes = "Returns result of removing the army")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Boolean.class)})
+  @DeleteMapping("/armies/{armyId:[\\d]+}")
+  public boolean removeArmy(@PathVariable(name = "armyId") final Long armyId) {
+    return this.armedForcesRepository.removeAmry(armyId);
+  }
 
   @ApiOperation(value = "List the summary of all the armies", notes = "Returns a list of all armies")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = ArmyDetailsView.class, responseContainer = "List")})

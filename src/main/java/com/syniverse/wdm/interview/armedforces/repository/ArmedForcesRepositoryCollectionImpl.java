@@ -106,22 +106,28 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	@Override
 	public Long recruitUnit(final Long armyId, final Unit unit) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
-		//check army exist
+		// check army exist
 		if (armyOptional.isPresent()) {
 			Army amry = armyOptional.get();
-			//check size unit in that army
+			// check size unit in that army
 			if (amry.getUnits().size() < 100) {
-				//check unit type is not acceptable in that army
-				if(amry.getType()==unit.getType().getArmyType()) {
+				// check unit type is not acceptable in that army
+				if (amry.getType() == unit.getType().getArmyType()) {
 					final Long unitId = getNextUnitId(amry);
-					amry.getUnits()
-							.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType()).build());
-					return unitId;
-				}else {
+					// check combat power
+					if (unit.getCombatPower() <= 100 && unit.getCombatPower() >= 1) {
+						amry.getUnits().add(Unit.builder().id(unitId).combatPower(unit.getCombatPower())
+								.type(unit.getType()).build());
+						return unitId;
+					} else {
+						throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+								"Cannot add units with combat power less than 1 or greater than 100, Sir!");
+					}
+				} else {
 					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 							"Cannot add units. Unit type is not acceptable in that army  , Sir!");
 				}
-				
+
 			} else {
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 						"Cannot add more units. Unit in one army less than 100, Sir!");
@@ -138,7 +144,7 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
 		if (armyOptional.isPresent()) {
 			return getArmyById(armyId).getUnits();
-		}else {
+		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 					"Cannot add unit to army. Army not existed!");
 		}
@@ -160,15 +166,15 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	@Override
 	public boolean removeUnit(Long armyId, Long unitId) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
-		boolean isRemoved=false;
+		boolean isRemoved = false;
 		if (armyOptional.isPresent()) {
-			 if(armyOptional.get().getUnits().removeIf(unit -> unit.getId() == unitId)) {
-				 isRemoved=true;
-			 }
-			 if(armyOptional.get().getUnits().size()==0) {
-				 this.armies.remove(armyId);
-			 }
-			 return isRemoved;
+			if (armyOptional.get().getUnits().removeIf(unit -> unit.getId() == unitId)) {
+				isRemoved = true;
+			}
+			if (armyOptional.get().getUnits().size() == 0) {
+				this.armies.remove(armyId);
+			}
+			return isRemoved;
 		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 					"Cannot add unit to army. Army not existed!");
@@ -248,8 +254,21 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 		return (army.getUnits().isEmpty() ? 0L
 				: Collections.max(army.getUnits().stream().map(Unit::getId).collect(Collectors.toList()))) + 1L;
 	}
-	
-	
-	
+
+	@Override
+	public boolean removeAmry(Long armyId) {
+		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
+		if (armyOptional.isPresent()) {
+			if (armyOptional.get().getUnits().isEmpty()) {
+				this.armies.remove(armyId);
+				return true;
+			} else {
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+						"Can not remove army when units still existed, Sir!");
+			}
+		} else {
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Army not existed!");
+		}
+	}
 
 }
