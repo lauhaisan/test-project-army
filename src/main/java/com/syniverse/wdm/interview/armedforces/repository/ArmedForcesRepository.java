@@ -51,5 +51,8 @@ public interface ArmedForcesRepository {
 	
 	//question 13
 	public boolean removeStrongestUnit(Long armyId);
+	
+	//constants
+	public boolean removeAmry(Long armyId);
 
 }
