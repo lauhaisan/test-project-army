@@ -2,6 +2,7 @@ package com.syniverse.wdm.interview.armedforces.repository;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -20,6 +21,9 @@ import org.springframework.web.server.ResponseStatusException;
 public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepository {
 
 	private final Map<Long, Army> armies = new ConcurrentHashMap<>();
+	private final long TIME_MERGE_MIN = 3;// TIME SECOND
+
+	private volatile boolean ACCESS_MODIFIY = true;
 
 	@PostConstruct
 	protected void initializeData() {
@@ -214,7 +218,15 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	public Unit getUnitOfArmy(Long armyId, Long unitId) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
 		if (armyOptional.isPresent()) {
-			return armyOptional.get().getUnits().stream().filter(p -> p.getId() == unitId).findFirst().get();
+			Optional<Unit> unitOptional=Optional.ofNullable(armyOptional.get().getUnits().stream()
+					.filter(unit -> Objects.nonNull(unit))
+					.filter(p -> p.getId() == unitId).findFirst().orElse(null));
+			if(unitOptional.isPresent()) {
+				return unitOptional.get();
+			}else {
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Unit not existed in the Army!");
+			}
+			 
 		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Army not existed!");
 		}
@@ -226,24 +238,77 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
 		if (armyOptional.isPresent()) {
 			List<Unit> units = new ArrayList<Unit>(armyOptional.get().getUnits());
-			Unit unit = Collections.max(units, Comparator.comparing(s -> s.getCombatPower()));
-			Optional<Unit> unitOptional = Optional.ofNullable(unit);
-			if (unitOptional.isPresent()) {
+			if (units.size() > 1) {
+				Unit unit = Collections.max(units, Comparator.comparing(s -> s.getCombatPower()));
 				units.remove(unit);
 				this.armies.get(armyId).setUnits(units);
-				return true;
 			} else {
-				return false;
+				this.armies.remove(armyId);
 			}
+			return true;
 		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Army not existed!");
 		}
 	}
 
 	@Override
-	public boolean removeStrongestUnit(Long armyId) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean mergeArmyIds(Long armyId, List<Long> mergeArmyIds) {
+		//check only one access merge
+		if (ACCESS_MODIFIY) {
+			disableModifiy();
+			long beginTime = System.currentTimeMillis();
+			Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
+			//check Army existed
+			if (armyOptional.isPresent()) {
+				for (Long id : mergeArmyIds) {
+					Optional<Army> armyMergeOptional = Optional.ofNullable(this.armies.get(id));
+					if (armyMergeOptional.isPresent()) {
+						if (armyOptional.get().getType() != armyMergeOptional.get().getType()) {
+							enableModifiy();
+							throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+									"Army [" + id + "] Can not merge. Army must the same Type!");
+						}
+					} else {
+						enableModifiy();
+						throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+								"Army [" + id + "] not existed!");
+					}
+				}
+				//Merge action
+				Long unitId = getNextUnitId(armyOptional.get());
+				List<Unit> units= new ArrayList<Unit>();
+				for(Long id : mergeArmyIds) {
+					List<Unit> tmp=this.armies.get(id).getUnits();
+					for (Unit unit : tmp) {
+						units.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType()).build());
+						unitId++;
+					}
+					this.armies.remove(id);
+				}
+				armyOptional.get().getUnits().addAll(units);
+				long endTime = System.currentTimeMillis();
+				long range = (beginTime - endTime) / 1000;
+				while (TIME_MERGE_MIN > range) {
+					try {
+						TimeUnit.SECONDS.sleep(1);
+						range++;
+					} catch (InterruptedException e) {
+						enableModifiy();
+						e.printStackTrace();
+					}
+				}
+			} else {
+				enableModifiy();
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Army not existed!");
+			}
+			enableModifiy();
+		} else {
+			enableModifiy();
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Please waiting merge Army done!");
+
+		}
+
+		return true;
 	}
 
 	private Long getNextArmyId() {
@@ -271,4 +336,11 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 		}
 	}
 
+	private void enableModifiy() {
+		ACCESS_MODIFIY = true;
+	}
+
+	private void disableModifiy() {
+		ACCESS_MODIFIY = false;
+	}
 }

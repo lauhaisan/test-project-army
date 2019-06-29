@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -37,5 +40,15 @@ public class DocumentationConfig {
     dock.useDefaultResponseMessages(false);
     dock.produces(new HashSet<>(Collections.singletonList("application/json")));
     return dock;
+  }
+  
+  @Bean("threadPoolTaskExecutor")
+  public TaskExecutor getAsyncExecutor() {
+      ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+      executor.setCorePoolSize(2);
+      executor.setMaxPoolSize(10);
+      executor.setWaitForTasksToCompleteOnShutdown(true);
+      executor.setThreadNamePrefix("Async-");
+      return executor;
   }
 }

@@ -62,7 +62,7 @@ public class ArmedForcesController {
   
   @ApiOperation(value = "Fetch the army’ details", notes = "Returns the army’ details")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = ArmyDetailsView.class, responseContainer = "Object")})
-  @GetMapping("/armies/{armyId:[\\d]+}/")
+  @GetMapping("/armies/{armyId:[\\d]+}")
   public ArmyDetailsView getArmyById(@PathVariable(name = "armyId") final Long armyId) {
     return ArmyDetailsView.fromArmy(this.armedForcesRepository.getArmyById(armyId));
   }
@@ -102,4 +102,11 @@ public class ArmedForcesController {
     return this.armedForcesRepository.getUnitsWithPower50OrMore(armyId).stream().map(UnitDetailsView::fromUnit).collect(Collectors.toList());
   }
 
+  
+  @ApiOperation(value = " Merge one or more armies into the army identified by ID ", notes = "Returns boolean result merge armies")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Boolean.class)})
+  @PutMapping("/armies/{armyId:[\\d]+}/units/{mergeArmyIds}")
+   public boolean merge(@PathVariable(name = "armyId") final Long armyId,@PathVariable("mergeArmyIds") List<Long> mergeArmyIds) {
+    return this.armedForcesRepository.mergeArmyIds(armyId, mergeArmyIds);
+  }
 }

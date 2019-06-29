@@ -50,9 +50,9 @@ public interface ArmedForcesRepository {
 	public boolean removeStrongestUnitOfArmy(Long armyId);
 	
 	//question 13
-	public boolean removeStrongestUnit(Long armyId);
+	public boolean mergeArmyIds(Long armyId,List<Long> mergeArmyIds);
 	
-	//constants
+	
 	public boolean removeAmry(Long armyId);
 
 }
