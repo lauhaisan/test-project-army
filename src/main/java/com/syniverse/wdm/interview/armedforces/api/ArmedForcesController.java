@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.syniverse.wdm.interview.armedforces.dto.ArmyType;
 import com.syniverse.wdm.interview.armedforces.repository.ArmedForcesRepository;
 import com.syniverse.wdm.interview.armedforces.view.ArmyDetailsView;
 import com.syniverse.wdm.interview.armedforces.view.ArmyInputView;
@@ -37,6 +38,8 @@ public class ArmedForcesController {
   public boolean removeArmy(@PathVariable(name = "armyId") final Long armyId) {
     return this.armedForcesRepository.removeAmry(armyId);
   }
+  
+  
 
   @ApiOperation(value = "List the summary of all the armies", notes = "Returns a list of all armies")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = ArmyDetailsView.class, responseContainer = "List")})
@@ -44,7 +47,12 @@ public class ArmedForcesController {
   public List<ArmyDetailsView> getArmies() {
     return this.armedForcesRepository.getArmies().stream().map(ArmyDetailsView::fromArmy).collect(Collectors.toList());
   }
-
+  @ApiOperation(value = "List armies of a given type", notes = "Returns a list armies of a given type")
+  @ApiResponses({@ApiResponse(code = 200, message = "Success", response = ArmyDetailsView.class, responseContainer = "List")})
+  @GetMapping("/armies/type/{type}")
+  public List<ArmyDetailsView> getArmiesByType(@PathVariable(name = "type")  final String type) {
+    return this.armedForcesRepository.getArmiesOfGivenType(ArmyType.valueOf(type)).stream().map(ArmyDetailsView::fromArmy).collect(Collectors.toList());
+  }
   @ApiOperation(value = "Recruit a unit to the army", notes = "Returns the ID of the newly recruited unit")
   @ApiResponses({@ApiResponse(code = 200, message = "Success", response = Long.class)})
   @PostMapping("/armies/{armyId:[\\d]+}/units")
