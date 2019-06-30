@@ -21,8 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepository {
 
 	private final Map<Long, Army> armies = new ConcurrentHashMap<>();
-	private final long TIME_MERGE_MIN = 3;// TIME SECOND
-
+	private final long TIME_MERGE_MIN = 60;// TIME SECOND
 	private volatile boolean ACCESS_MODIFIY = true;
 
 	@PostConstruct
@@ -218,15 +217,14 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 	public Unit getUnitOfArmy(Long armyId, Long unitId) {
 		Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
 		if (armyOptional.isPresent()) {
-			Optional<Unit> unitOptional=Optional.ofNullable(armyOptional.get().getUnits().stream()
-					.filter(unit -> Objects.nonNull(unit))
-					.filter(p -> p.getId() == unitId).findFirst().orElse(null));
-			if(unitOptional.isPresent()) {
+			Optional<Unit> unitOptional = Optional.ofNullable(armyOptional.get().getUnits().stream()
+					.filter(unit -> Objects.nonNull(unit)).filter(p -> p.getId() == unitId).findFirst().orElse(null));
+			if (unitOptional.isPresent()) {
 				return unitOptional.get();
-			}else {
+			} else {
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Unit not existed in the Army!");
 			}
-			 
+
 		} else {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Army not existed!");
 		}
@@ -253,34 +251,44 @@ public class ArmedForcesRepositoryCollectionImpl implements ArmedForcesRepositor
 
 	@Override
 	public boolean mergeArmyIds(Long armyId, List<Long> mergeArmyIds) {
-		//check only one access merge
+		// check only one access merge
 		if (ACCESS_MODIFIY) {
 			disableModifiy();
+
 			long beginTime = System.currentTimeMillis();
 			Optional<Army> armyOptional = Optional.ofNullable(this.armies.get(armyId));
-			//check Army existed
+			// check Army existed
 			if (armyOptional.isPresent()) {
+				int sizeUnit = armyOptional.get().getUnits().size();
 				for (Long id : mergeArmyIds) {
 					Optional<Army> armyMergeOptional = Optional.ofNullable(this.armies.get(id));
 					if (armyMergeOptional.isPresent()) {
+						// check the same Type
 						if (armyOptional.get().getType() != armyMergeOptional.get().getType()) {
 							enableModifiy();
 							throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 									"Army [" + id + "] Can not merge. Army must the same Type!");
 						}
+						sizeUnit = sizeUnit + armyMergeOptional.get().getUnits().size();
 					} else {
 						enableModifiy();
 						throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
 								"Army [" + id + "] not existed!");
 					}
 				}
-				//Merge action
+				if (sizeUnit > 100) {
+					enableModifiy();
+					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+							"Cannot merge Army. Unit in one army less than equal 100!");
+				}
+				// Merge action
 				Long unitId = getNextUnitId(armyOptional.get());
-				List<Unit> units= new ArrayList<Unit>();
-				for(Long id : mergeArmyIds) {
-					List<Unit> tmp=this.armies.get(id).getUnits();
+				List<Unit> units = new ArrayList<Unit>();
+				for (Long id : mergeArmyIds) {
+					List<Unit> tmp = this.armies.get(id).getUnits();
 					for (Unit unit : tmp) {
-						units.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType()).build());
+						units.add(Unit.builder().id(unitId).combatPower(unit.getCombatPower()).type(unit.getType())
+								.build());
 						unitId++;
 					}
 					this.armies.remove(id);
